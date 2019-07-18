@@ -7,13 +7,33 @@
 
 
 ## Setup Docker Repo
-Setup the `KO_DOCKER_REPO` variable. Check that you can docker login.
+Check that `docker login` can be done successfully.
+Setup the `KO_DOCKER_REPO` variable. 
 
 `
 export KO_DOCKER_REPO=docker.io/kbaig
 `
 
+## Install Listener
 
+`
+mkdir -p ${GOPATH}/src/github.com/tektoncd
+cd ${GOPATH}/src/github.com/tektoncd
+git clone git@github.com:tektoncd/experimental.git
+cd tekton-listener
+ko apply -f config
+`
+
+## Install Github Eventing Source
+
+`
+mkdir -p ${GOPATH}/src/github.com/knative
+cd ${GOPATH}/src/github.com/knative
+git clone git@github.com:khrm/eventing-contrib.git
+git checkout Openshift
+cd eventing-contrib
+ko apply -f contrib/github/config
+`
 
 ## Change the repositories
 Change the ownerAndRepository field in file `manifests/githubsource.yaml`. 
