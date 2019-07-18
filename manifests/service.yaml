@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-tekton-listener-service
+  namespace: demo-tekton-listener
+spec:
+  selector:
+    app: demo-tekton-listener
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8082

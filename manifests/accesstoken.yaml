@@ -1,0 +1,41 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: demo-tekton-listener-admin
+  namespace: demo-tekton-listener
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "secrets", "events", "serviceaccounts", "configmaps"]
+    verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets", "deployments"]
+    verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
+  - apiGroups: ["tekton.dev"]
+    resources: ["tasks", "clustertasks", "taskruns", "pipelines", "pipelineruns", "pipelineresources"]
+    verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
+  - apiGroups: ["tektonexperimental.dev"]
+    resources: ["tektonlisteners", "eventbindings"]
+    verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: demo-tekton-listener-account
+  namespace: demo-tekton-listener
+secrets:
+- name: dockerhub-user-pass
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: demo-tekton-listener-admin
+  namespace: demo-tekton-listener
+subjects:
+  - kind: ServiceAccount
+    name: demo-tekton-listener-account
+    namespace: demo-tekton-listener
+roleRef:
+  kind: ClusterRole
+  name: demo-tekton-listener-admin
+  apiGroup: rbac.authorization.k8s.io

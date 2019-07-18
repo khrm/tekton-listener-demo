@@ -1,0 +1,23 @@
+apiVersion: sources.eventing.knative.dev/v1alpha1
+kind: GitHubSource
+metadata:
+  name: demo-tekton-listener-ghsource
+  namespace: demo-tekton-listener
+spec:
+  serviceAccountName: demo-tekton-listener-account
+  eventTypes:
+    - pull_request
+    - push
+  ownerAndRepository: khrm/test-wb
+  accessToken:
+    secretKeyRef:
+      name: githubsecret
+      key: accessToken
+  secretToken:
+    secretKeyRef:
+      name: githubsecret
+      key: secretToken
+  sink:
+    apiVersion: v1
+    kind: Service
+    name: demo-tekton-listener-service

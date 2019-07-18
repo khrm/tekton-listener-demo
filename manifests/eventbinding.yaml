@@ -1,0 +1,41 @@
+apiVersion: tektonexperimental.dev/v1alpha1
+kind: EventBinding
+metadata:
+  name: demo-tekton-listener-binding
+  namespace: demo-tekton-listener
+  labels:
+    app: demo-tekton-listener
+spec:
+  eventname: pushevents
+  eventtype: dev.knative.source.github.push
+  serviceAccount: demo-tekton-listener-account
+  selector:
+    matchLabels:
+      app: demo-tekton-listener
+  template:
+    metadata:
+      labels:
+        role: demo-tekton-listener
+  pipelineRef:
+    name: demo-tekton-listener-pipeline
+  sourceref:
+    name: demo-tekton-listener-source
+  resourceTemplates:
+  - name: source-repo
+    metadata:
+      name: source-repo
+      namespace: demo-tekton-listener
+    spec:
+      type: git
+      params:
+      - name: url
+        value: https://github.com/khrm/test-wb
+  - name: image-demo-tekton-listener
+    metadata:
+      name: image-demo-tekton-listener
+      namespace: demo-tekton-listener
+    spec:
+      type: image
+      params:
+      - name: url
+        value: kbaig/demo-tekton-listener

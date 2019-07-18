@@ -1,0 +1,119 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-tekton-listener
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dockerhub-user-pass
+  namespace: demo-tekton-listener
+  annotations:
+    build.knative.dev/docker-0: https://index.docker.io
+    tekton.dev/docker-0: https://index.docker.io
+type: kubernetes.io/basic-auth
+data:
+  # Use 'echo -n "username" | base64' to generate this string
+  username: 
+  # Use 'echo -n "password" | base64' to generate this string
+  password: 
+
+---
+
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: build-docker-image-from-git-source
+  namespace: demo-tekton-listener
+spec:
+  inputs:
+    resources:
+      - name: docker-source
+        type: git
+    params:
+      - name: pathToDockerFile
+        description: The path to the dockerfile to build
+        default: /workspace/docker-source/Dockerfile
+      - name: pathToContext
+        description:
+          The build context used by Kaniko
+          (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
+        default: /workspace/docker-source
+  outputs:
+    resources:
+      - name: builtImage
+        type: image
+  steps:
+    - name: build-and-push
+      image: gcr.io/kaniko-project/executor
+      command:
+        - /kaniko/executor
+      args:
+        - --dockerfile=${inputs.params.pathToDockerFile}
+        - --destination=${outputs.resources.builtImage.url}
+        - --context=${inputs.params.pathToContext}
+
+---
+
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: run-using-kubectl
+  namespace: demo-tekton-listener
+spec:
+  inputs:
+    resources:
+      - name: image-demo-tekton-listener
+        type: image
+  steps:
+    - name: run-kubectl
+      image: lachlanevenson/k8s-kubectl
+      command: ["kubectl"]
+      args:
+        - "run"
+        - "tekton-demo-tekton-listener"
+        - "--image"
+        - "${inputs.resources.image-demo-tekton-listener.url}"
+        - "--env=PORT=8080"
+
+---
+
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: demo-tekton-listener-pipeline
+  namespace: demo-tekton-listener
+spec:
+  resources:
+    - name: source-repo
+      type: git
+    - name: image-demo-tekton-listener
+      type: image
+  tasks:
+    - name: build-docker-image
+      taskRef:
+        name: build-docker-image-from-git-source
+      params:
+        - name: pathToDockerFile
+          value: Dockerfile
+        - name: pathToContext
+          value: /workspace/docker-source
+      resources:
+        inputs:
+          - name: docker-source
+            resource: source-repo
+        outputs:
+          - name: builtImage
+            resource: image-demo-tekton-listener
+    - name: deploy-docker-image
+      taskRef:
+        name: run-using-kubectl
+      resources:
+        inputs:
+          - name: image-demo-tekton-listener
+            resource: image-demo-tekton-listener
+            from:
+              - build-docker-image
