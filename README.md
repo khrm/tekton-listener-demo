@@ -1,7 +1,7 @@
 # tekton-listener-demo
 
 ## Prerequisites
-- Knative eventing and serving. Can be installed via operator.
+- Knative eventing and serving. Can be installed via operatorhub.
 - Tektoncd: [Install](https://github.com/tektoncd/pipeline/blob/master/docs/install.md#installing-tekton-pipelines-on-openshiftminishift)
 - KO: [Install](https://github.com/google/ko#installation)
 
